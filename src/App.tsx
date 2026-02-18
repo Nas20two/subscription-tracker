@@ -1,7 +1,19 @@
 import { useEffect, useState } from "react";
 import { fetchSubscriptions, calculateMonthlyCost, getUpcomingRenewals } from "./notion";
 import type { Subscription } from "./notion";
-import { CreditCard, Calendar, AlertTriangle, TrendingUp, Loader2, ExternalLink } from "lucide-react";
+import { 
+  CreditCard, 
+  Calendar, 
+  AlertTriangle, 
+  TrendingUp, 
+  Loader2, 
+  ExternalLink,
+  Wallet,
+  Bell,
+  CheckCircle2,
+  XCircle,
+  Clock
+} from "lucide-react";
 import "./App.css";
 
 function App() {
@@ -29,13 +41,22 @@ function App() {
   const yearlyCost = monthlyCost * 12;
   const upcomingRenewals = getUpcomingRenewals(subscriptions, 30);
   const actionItems = subscriptions.filter(s => s.actionNeeded);
+  const activeCount = subscriptions.filter(s => s.status === "Active").length;
+
+  // Calculate days until renewal
+  const getDaysUntil = (dateStr: string) => {
+    const renewal = new Date(dateStr);
+    const today = new Date();
+    const diffTime = renewal.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex items-center gap-2 text-gray-600">
-          <Loader2 className="w-6 h-6 animate-spin" />
-          <span>Loading subscriptions...</span>
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-400">Loading your subscriptions...</p>
         </div>
       </div>
     );
@@ -43,14 +64,15 @@ function App() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-2">{error}</p>
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-center glass rounded-2xl p-8 max-w-md">
+          <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-400 mb-4">{error}</p>
           <button 
             onClick={loadSubscriptions}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
           >
-            Retry
+            Try Again
           </button>
         </div>
       </div>
@@ -58,78 +80,99 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-900">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CreditCard className="w-6 h-6 text-blue-600" />
-            <h1 className="text-xl font-bold text-gray-900">Subscription Tracker</h1>
+      <header className="gradient-header sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <Wallet className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">Subscription Tracker</h1>
+                <p className="text-white/70 text-sm">Never miss a renewal</p>
+              </div>
+            </div>
+            <a 
+              href="https://notion.so" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white/90 transition-colors text-sm"
+            >
+              Open Notion <ExternalLink className="w-4 h-4" />
+            </a>
           </div>
-          <a 
-            href="https://notion.so" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
-          >
-            Open Notion <ExternalLink className="w-4 h-4" />
-          </a>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center gap-2 text-gray-600 mb-2">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {/* Monthly Cost */}
+          <div className="glass rounded-2xl p-5 animate-fade-in">
+            <div className="flex items-center gap-2 text-indigo-400 mb-2">
               <TrendingUp className="w-5 h-5" />
-              <span className="text-sm font-medium">Monthly Cost</span>
+              <span className="text-sm font-medium">Monthly</span>
             </div>
-            <p className="text-2xl font-bold text-gray-900">${monthlyCost.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-white">${monthlyCost.toFixed(2)}</p>
+            <p className="text-slate-400 text-xs mt-1">AUD equivalent</p>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center gap-2 text-gray-600 mb-2">
+          {/* Yearly Cost */}
+          <div className="glass rounded-2xl p-5 animate-fade-in" style={{animationDelay: "0.1s"}}>
+            <div className="flex items-center gap-2 text-purple-400 mb-2">
               <CreditCard className="w-5 h-5" />
-              <span className="text-sm font-medium">Yearly Cost</span>
+              <span className="text-sm font-medium">Yearly</span>
             </div>
-            <p className="text-2xl font-bold text-gray-900">${yearlyCost.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-white">${yearlyCost.toFixed(0)}</p>
+            <p className="text-slate-400 text-xs mt-1">Projected cost</p>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center gap-2 text-gray-600 mb-2">
+          {/* Active Subs */}
+          <div className="glass rounded-2xl p-5 animate-fade-in" style={{animationDelay: "0.2s"}}>
+            <div className="flex items-center gap-2 text-emerald-400 mb-2">
+              <CheckCircle2 className="w-5 h-5" />
+              <span className="text-sm font-medium">Active</span>
+            </div>
+            <p className="text-2xl font-bold text-white">{activeCount}</p>
+            <p className="text-slate-400 text-xs mt-1">Subscriptions</p>
+          </div>
+
+          {/* Upcoming */}
+          <div className="glass rounded-2xl p-5 animate-fade-in" style={{animationDelay: "0.3s"}}>
+            <div className="flex items-center gap-2 text-amber-400 mb-2">
               <Calendar className="w-5 h-5" />
-              <span className="text-sm font-medium">Upcoming (30d)</span>
+              <span className="text-sm font-medium">Due Soon</span>
             </div>
-            <p className="text-2xl font-bold text-gray-900">{upcomingRenewals.length}</p>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center gap-2 text-gray-600 mb-2">
-              <AlertTriangle className="w-5 h-5" />
-              <span className="text-sm font-medium">Action Needed</span>
-            </div>
-            <p className="text-2xl font-bold text-red-600">{actionItems.length}</p>
+            <p className="text-2xl font-bold text-white">{upcomingRenewals.length}</p>
+            <p className="text-slate-400 text-xs mt-1">Next 30 days</p>
           </div>
         </div>
 
-        {/* Alerts Section */}
+        {/* Action Items Alert */}
         {actionItems.length > 0 && (
-          <div className="mb-8 bg-amber-50 border border-amber-200 rounded-lg p-4">
-            <h2 className="text-lg font-semibold text-amber-800 mb-3 flex items-center gap-2">
+          <div className="mb-8 glass rounded-2xl p-6 border-l-4 border-amber-500 animate-fade-in">
+            <h2 className="text-lg font-semibold text-amber-400 mb-4 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
-              Action Items
+              Action Required
             </h2>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {actionItems.map(item => (
-                <div key={item.id} className="flex items-center justify-between bg-white p-3 rounded border border-amber-200">
-                  <div>
-                    <p className="font-medium text-gray-900">{item.name}</p>
-                    <p className="text-sm text-gray-600">{item.notes}</p>
+                <div key={item.id} className="flex items-center justify-between bg-slate-800/50 p-4 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
+                      <Bell className="w-5 h-5 text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-white">{item.name}</p>
+                      <p className="text-slate-400 text-sm">{item.notes}</p>
+                    </div>
                   </div>
-                  <span className="text-amber-600 font-medium">
-                    ${item.cost}/{item.billingCycle === "Yearly" ? "yr" : "mo"}
-                  </span>
+                  <div className="text-right">
+                    <p className="text-amber-400 font-bold">${item.cost}</p>
+                    <p className="text-slate-500 text-xs">{item.billingCycle}</p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -138,29 +181,82 @@ function App() {
 
         {/* Upcoming Renewals */}
         {upcomingRenewals.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Renewals (Next 30 Days)</h2>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="mb-8 animate-fade-in">
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-indigo-400" />
+              Upcoming Renewals
+            </h2>
+            <div className="glass rounded-2xl overflow-hidden">
+              {upcomingRenewals.map((sub, idx) => {
+                const daysUntil = getDaysUntil(sub.nextRenewal);
+                const isUrgent = daysUntil <= 7;
+                return (
+                  <div key={sub.id} className={`flex items-center justify-between p-4 ${idx !== upcomingRenewals.length - 1 ? 'border-b border-slate-700' : ''}`}>
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isUrgent ? 'bg-red-500/20' : 'bg-indigo-500/20'}`}>
+                        <span className={`text-lg font-bold ${isUrgent ? 'text-red-400' : 'text-indigo-400'}`}>
+                          {daysUntil}d
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">{sub.name}</p>
+                        <p className="text-slate-400 text-sm">{sub.nextRenewal}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white font-bold">${sub.cost}</p>
+                      <span className="px-2 py-1 text-xs rounded-full bg-slate-700 text-slate-300">
+                        {sub.category}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* All Subscriptions */}
+        <div className="animate-fade-in">
+          <h2 className="text-lg font-semibold text-white mb-4">All Subscriptions ({subscriptions.length})</h2>
+          <div className="glass rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-slate-800/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Renewal Date</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Cost</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Category</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">Service</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">Category</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">Cost</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">Renewal</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {upcomingRenewals.map(sub => (
-                    <tr key={sub.id} className="border-b border-gray-100 last:border-0">
-                      <td className="px-4 py-3 font-medium text-gray-900">{sub.name}</td>
-                      <td className="px-4 py-3 text-gray-600">{sub.nextRenewal}</td>
-                      <td className="px-4 py-3 text-gray-900">
-                        ${sub.cost} <span className="text-gray-500 text-sm">/{sub.billingCycle === "Yearly" ? "yr" : "mo"}</span>
+                  {subscriptions.map(sub => (
+                    <tr key={sub.id} className="border-b border-slate-700/50 last:border-0 hover:bg-slate-800/30 transition-colors">
+                      <td className="px-4 py-4">
+                        <p className="font-semibold text-white">{sub.name}</p>
+                        {sub.notes && <p className="text-slate-500 text-xs">{sub.notes}</p>}
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
+                      <td className="px-4 py-4">
+                        <span className="px-2 py-1 text-xs rounded-full bg-slate-700 text-slate-300">
                           {sub.category}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <p className="text-white font-medium">${sub.cost} <span className="text-slate-500 text-sm">/{sub.currency}</span></p>
+                        <p className="text-slate-500 text-xs">{sub.billingCycle}</p>
+                      </td>
+                      <td className="px-4 py-4 text-slate-300">
+                        {sub.nextRenewal || "-"}
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          sub.status === "Active" ? "bg-emerald-500/20 text-emerald-400" :
+                          sub.status === "Trial" ? "bg-purple-500/20 text-purple-400" :
+                          "bg-slate-700 text-slate-400"
+                        }`}>
+                          {sub.status}
                         </span>
                       </td>
                     </tr>
@@ -168,49 +264,6 @@ function App() {
                 </tbody>
               </table>
             </div>
-          </div>
-        )}
-
-        {/* All Subscriptions */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">All Subscriptions ({subscriptions.length})</h2>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Name</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Category</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Cost</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Next Renewal</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {subscriptions.map(sub => (
-                  <tr key={sub.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">{sub.name}</td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">
-                        {sub.category}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-900">
-                      ${sub.cost} <span className="text-gray-500 text-sm">/{sub.billingCycle === "Yearly" ? "yr" : "mo"}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{sub.nextRenewal || "-"}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        sub.status === "Active" ? "bg-green-100 text-green-700" :
-                        sub.status === "Trial" ? "bg-purple-100 text-purple-700" :
-                        "bg-gray-100 text-gray-700"
-                      }`}>
-                        {sub.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
       </main>
