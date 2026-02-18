@@ -6,7 +6,6 @@ import {
   Calendar, 
   AlertTriangle, 
   TrendingUp, 
-  Loader2, 
   ExternalLink,
   Wallet,
   Bell,
