@@ -24,6 +24,13 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Center all content */
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Gradient backgrounds */
@@ -50,6 +57,21 @@ body {
 
 .animate-fade-in {
   animation: fadeIn 0.5s ease-out;
+}
+
+/* Ensure proper centering */
+.max-w-6xl {
+  max-width: 72rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .max-w-6xl {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
 }
 
 /* Custom scrollbar */
